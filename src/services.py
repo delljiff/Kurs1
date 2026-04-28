@@ -1,11 +1,13 @@
 import logging
 import math
 from datetime import datetime
-from typing import Any, Dict, List
-
+from typing import List, Dict, Any
 import openpyxl
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 Transaction = Dict[str, Any]
@@ -46,8 +48,8 @@ def investment_bank(month: str, transactions: List[Transaction], limit: int) -> 
     logger.info(f"=== Запуск investment_bank для месяца {month} с лимитом {limit} ===")
 
     filtered: List[Transaction] = filter_by_month(transactions, month)
-    amounts: map = map(lambda t: t["Сумма операции"], filtered)
-    saved: map = map(lambda a: calculate_saved(a, limit), amounts)
+    amounts = map(lambda t: t["Сумма операции"], filtered)
+    saved = map(lambda a: calculate_saved(a, limit), amounts)
     total: float = sum(saved)
     total = round(total, 2)
 
@@ -59,10 +61,9 @@ def load_transactions_from_excel(filepath: str) -> List[Transaction]:
     """Загружает транзакции из Excel-файла"""
     logger.info(f"Загрузка транзакций из Excel: {filepath}")
 
-    wb: openpyxl.Workbook = openpyxl.load_workbook(filepath, data_only=True)
+    wb = openpyxl.load_workbook(filepath, data_only=True)
     sheet = wb.active
 
-    # mypy ругается, что sheet может быть None. Проверяем.
     if sheet is None:
         logger.error("Не удалось получить активный лист Excel")
         return []
@@ -74,15 +75,18 @@ def load_transactions_from_excel(filepath: str) -> List[Transaction]:
 
         date = row[0]
         amount = row[4]
+        category = row[9] if len(row) > 9 else None
 
         if date is not None and amount is not None:
-            # Преобразуем дату в строку, сумму — во float
-            date_str: str = str(date)
-            amount_float: float = float(str(amount))
+            if isinstance(amount, (int, float)):
+                amount_float = float(amount)
+            else:
+                amount_float = 0.0
 
             transactions.append({
-                "Дата операции": date_str[:10],  # сразу обрезаем до 10 символов
-                "Сумма операции": amount_float
+                "Дата операции": str(date),
+                "Сумма операции": amount_float,
+                "Категория": str(category) if category is not None else ""
             })
 
     logger.info(f"Загружено {len(transactions)} транзакций")
@@ -92,7 +96,6 @@ def load_transactions_from_excel(filepath: str) -> List[Transaction]:
 if __name__ == "__main__":
     transactions: List[Transaction] = load_transactions_from_excel("data/operations.xlsx")
     result: float = investment_bank("2021-12", transactions, 50)
-
     print(f"\n{'=' * 40}")
     print(f"ИТОГО В КОПИЛКЕ: {result} ₽")
     print(f"{'=' * 40}")
