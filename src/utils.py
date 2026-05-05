@@ -32,7 +32,7 @@ def get_greeting() -> str:
         return "Доброй ночи"
 
 
-def get_card_info(file_path: str) -> List[Dict[str, Any]]:
+def get_card_info(transactions) -> List[Dict[str, Any]]:
     """
         Анализирует транзакции по картам
 
@@ -45,8 +45,7 @@ def get_card_info(file_path: str) -> List[Dict[str, Any]]:
                 - total_spent: общая сумма расходов
                 - cashback: сумма кешбэка
     """
-    df = read_excel_file(file_path)
-    df = df[(df["Статус"] == "OK") & (df["Сумма операции"] < 0)]
+    df = transactions[(transactions["Статус"] == "OK") & (transactions["Сумма операции"] < 0)]
     df = df[df['Номер карты'].notna()]
     df['last_digits'] = df['Номер карты'].str.replace('*', '')
     card_totals = df.groupby('last_digits')['Сумма операции'].sum().abs()
@@ -62,11 +61,10 @@ def get_card_info(file_path: str) -> List[Dict[str, Any]]:
     return result
 
 
-def get_top_five_transactions(file_path: str) -> List[Dict[str, Any]]:
+def get_top_five_transactions(transactions) -> List[Dict[str, Any]]:
     """Возвращает топ-5 транзакций по сумме платежа"""
-    df = read_excel_file(file_path)
 
-    df = df[df['Статус'] == 'OK']
+    df = transactions[transactions['Статус'] == 'OK']
     df['abs_sum'] = df['Сумма операции'].abs()
     top_5 = df.sort_values('abs_sum', ascending=False).head(5)
 
