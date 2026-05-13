@@ -3,6 +3,9 @@ from datetime import datetime
 from typing import Optional
 from functools import wraps
 import pandas as pd
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def report_decorator(func):
@@ -10,18 +13,26 @@ def report_decorator(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        logger.info(f"Запуск функции-отчета: {func.__name__}")
+
         result = func(*args, **kwargs)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"report_{func.__name__}_{timestamp}.json"
 
+        logger.info(f"Сохранение отчета в файл: {filename}")
+
         if isinstance(result, pd.DataFrame):
             data_to_save = result.to_dict(orient='records')
+            logger.debug(f"Сохранено {len(result)} записей из DataFrame")
         else:
             data_to_save = result
+            logger.debug(f"Сохранен результат типа {type(result)}")
 
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(data_to_save, f, ensure_ascii=False, indent=2, default=str)
+
+        logger.info(f"Отчет {func.__name__} успешно сохранен")
 
         return result
 
@@ -35,15 +46,20 @@ def spending_by_category(transactions: pd.DataFrame,
     """
     Возвращает траты по заданной категории за последние 3 месяца.
     """
+    logger.info(f"Анализ трат по категории: {category}")
+
     df = transactions.copy()
     df['Дата'] = pd.to_datetime(df['Дата операции'], dayfirst=True, errors='coerce')
 
     if date is None:
         end_date = datetime.now()
+        logger.info(f"Дата не указана, используем текущую: {end_date.date()}")
     else:
         end_date = pd.to_datetime(date)
+        logger.info(f"Используем указанную дату: {end_date.date()}")
 
     start_date = end_date - pd.DateOffset(months=3)
+    logger.info(f"Период анализа: с {start_date.date()} по {end_date.date()}")
 
     date_filtered = df[(df['Дата'] >= start_date) & (df['Дата'] <= end_date)]
 
@@ -53,16 +69,3 @@ def spending_by_category(transactions: pd.DataFrame,
         ]
 
     return result
-
-
-# Проверка
-if __name__ == "__main__":
-    from utils import read_excel_file
-
-    df = read_excel_file("data/operations.xlsx")
-
-    # Проверяем для категории "Супермаркеты"
-    result = spending_by_category(df, "Супермаркеты", "2021-12-31")
-    print(f"Найдено транзакций: {len(result)}")
-    print(f"Общая сумма трат: {abs(result['Сумма операции'].sum()):.2f}")
-    print(result.head())
