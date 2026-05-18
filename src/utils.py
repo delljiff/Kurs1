@@ -77,12 +77,12 @@ def get_currency_rates(file_path: str) -> List[Dict[str, Any]]:
     result = [{"currency": "RUB", "rate": 1.0}]
 
     try:
-        # ЦБ РФ отдаёт XML
         url = "https://www.cbr.ru/scripts/XML_daily.asp"
         response = requests.get(url, timeout=10)
         response.encoding = "windows-1251"
 
         import xml.etree.ElementTree as ET
+
         root = ET.fromstring(response.text)
 
         for valute in root.findall("Valute"):
@@ -119,7 +119,6 @@ def get_stock_prices(file_path: str) -> List[Dict[str, Any]]:
 
             if response.status_code == 200:
                 data = response.json()
-                # цена в marketdata -> data -> первый ряд -> индекс 12 (обычно last)
                 marketdata = data.get("marketdata", {}).get("data", [])
                 if marketdata and len(marketdata[0]) > 12:
                     price = marketdata[0][12]

@@ -1,6 +1,8 @@
-from typing import Any, Dict
-import pandas as pd
 import logging
+from typing import Any, Dict
+
+import pandas as pd
+
 from src.utils import get_card_info, get_currency_rates, get_greeting, get_stock_prices, get_top_five_transactions
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ def main_page(transactions: pd.DataFrame, date: str) -> Dict[str, Any]:
 
     logger.debug(f"Период фильтрации: с {start_date} по {end_date}")
 
-    filtered_df = transactions[transactions['Дата операции'].between(start_date, end_date)]
+    filtered_df = transactions[transactions["Дата операции"].between(start_date, end_date)]
     logger.debug(f"Отфильтровано {len(filtered_df)} транзакций")
 
     data_json = {

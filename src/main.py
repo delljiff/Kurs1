@@ -1,17 +1,16 @@
 import logging
+
 import pandas as pd
-from src.services import best_categories_of_high_cashback
+
 from src.reports import spending_by_category
+from src.services import best_categories_of_high_cashback
 from src.views import main_page
 
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('coursework.log', encoding='utf-8'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("coursework.log", encoding="utf-8"), logging.StreamHandler()],
 )
 
 logger = logging.getLogger(__name__)
@@ -44,7 +43,6 @@ def main():
         cashback_result = best_categories_of_high_cashback(df, "2020", "12")
         print(cashback_result)
         logger.info(f"Результат: {cashback_result}")
-
 
         # 3. Пример вызова функции из reports
         logger.info("Вызов reports.spending_by_category")
