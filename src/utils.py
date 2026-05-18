@@ -1,5 +1,6 @@
 import datetime
 import json
+import xml.etree.ElementTree as ET
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -47,14 +48,13 @@ def get_card_info(transactions: pd.DataFrame) -> List[Dict[str, Any]]:
     return result
 
 
-def get_top_five_transactions(transactions) -> List[Dict[str, Any]]:
+def get_top_five_transactions(transactions: pd.DataFrame) -> List[Dict[str, Any]]:
     """Возвращает топ-5 транзакций по сумме платежа"""
-
     df = transactions[transactions["Статус"] == "OK"]
     df["abs_sum"] = df["Сумма операции"].abs()
     top_5 = df.sort_values("abs_sum", ascending=False).head(5)
 
-    result = []
+    result: List[Dict[str, Any]] = []
     for _, row in top_5.iterrows():
         result.append(
             {
@@ -73,31 +73,44 @@ def get_currency_rates(file_path: str) -> List[Dict[str, Any]]:
     with open(file_path, "r", encoding="utf-8") as f:
         settings = json.load(f)
 
-    user_currencies = settings["user_currencies"]
-    result = [{"currency": "RUB", "rate": 1.0}]
+    user_currencies = settings.get("user_currencies", [])
+    result: List[Dict[str, Any]] = [{"currency": "RUB", "rate": 1.0}]
 
     try:
         url = "https://www.cbr.ru/scripts/XML_daily.asp"
         response = requests.get(url, timeout=10)
         response.encoding = "windows-1251"
-
-        import xml.etree.ElementTree as ET
+        response.raise_for_status()
 
         root = ET.fromstring(response.text)
 
         for valute in root.findall("Valute"):
-            char_code = valute.find("CharCode").text
-            if char_code in user_currencies and char_code != "RUB":
-                value = valute.find("Value").text.replace(",", ".")
-                nominal = valute.find("Nominal").text
-                rate = float(value) / int(nominal)
-                result.append({"currency": char_code, "rate": round(rate, 4)})
+            char_code_elem = valute.find("CharCode")
+            if char_code_elem is None or char_code_elem.text is None:
+                continue
+            char_code = char_code_elem.text
+
+            if char_code not in user_currencies or char_code == "RUB":
+                continue
+
+            value_elem = valute.find("Value")
+            if value_elem is None or value_elem.text is None:
+                continue
+            value = float(value_elem.text.replace(",", "."))
+
+            nominal_elem = valute.find("Nominal")
+            if nominal_elem is None or nominal_elem.text is None:
+                continue
+            nominal = int(nominal_elem.text)
+
+            rate = value / nominal
+            result.append({"currency": char_code, "rate": round(rate, 4)})
 
     except Exception as e:
         print(f"Ошибка получения курсов: {e}")
         # fallback
         for currency in user_currencies:
-            if currency != "RUB" and not any(r["currency"] == currency for r in result):
+            if currency != "RUB" and not any(r.get("currency") == currency for r in result):
                 result.append({"currency": currency, "rate": None, "error": str(e)})
 
     return result
@@ -109,7 +122,7 @@ def get_stock_prices(file_path: str) -> List[Dict[str, Any]]:
         settings = json.load(file)
 
     user_stocks = settings.get("user_stocks", [])
-    result = []
+    result: List[Dict[str, Any]] = []
 
     for stock in user_stocks:
         try:

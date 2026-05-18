@@ -6,7 +6,7 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def best_categories_of_high_cashback(data: pd.DataFrame, year: str, month: str) -> Dict[str, Any]:
+def best_categories_of_high_cashback(data: pd.DataFrame, year: str, month: str) -> Dict[Any, Any]:
     """Анализирует выгодные категории для повышенного кешбэка"""
     logger.info(f"Начинаем анализ кешбэка за {year}-{month}")
 

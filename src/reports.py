@@ -3,24 +3,23 @@ import logging
 import os
 from datetime import datetime
 from functools import wraps
-from typing import Optional
+from typing import Any, Callable, Optional
 
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
 
-def report_decorator(func):
+def report_decorator(func: Callable) -> Callable:
     """Декоратор для функций-отчетов, сохраняет результат в JSON-файл с именем по умолчанию"""
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         logger.info(f"Запуск функции-отчета: {func.__name__}")
 
         result = func(*args, **kwargs)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         filename = os.path.join(project_root, f"report_{func.__name__}_{timestamp}.json")
 
@@ -51,9 +50,7 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
     logger.info(f"Анализ трат по категории: {category}")
 
     df = transactions.copy()
-    print(df)
     df["Дата"] = pd.to_datetime(df["Дата операции"], dayfirst=True, errors="coerce")
-    print(df)
 
     if date is None:
         end_date = datetime.now()
@@ -66,7 +63,6 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
     logger.info(f"Период анализа: с {start_date.date()} по {end_date.date()}")
 
     date_filtered = df[(df["Дата"] >= start_date) & (df["Дата"] <= end_date)]
-    print(date_filtered)
 
     result = date_filtered[(date_filtered["Категория"] == category) & (date_filtered["Сумма операции"] < 0)]
 

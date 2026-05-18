@@ -28,7 +28,7 @@ def load_data(file_path: str) -> pd.DataFrame:
         raise
 
 
-def main():
+def main() -> int:
     """Главная функция программы"""
     logger.info("=" * 50)
     logger.info("ЗАПУСК ПРОГРАММЫ")
