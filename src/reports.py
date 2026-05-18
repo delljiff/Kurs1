@@ -57,7 +57,7 @@ def spending_by_category(transactions: pd.DataFrame,
         end_date = datetime.now()
         logger.info(f"Дата не указана, используем текущую: {end_date.date()}")
     else:
-        end_date = pd.to_datetime(date)
+        end_date = pd.to_datetime(date, dayfirst=True)
         logger.info(f"Используем указанную дату: {end_date.date()}")
 
     start_date = end_date - pd.DateOffset(months=3)

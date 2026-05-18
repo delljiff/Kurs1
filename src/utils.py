@@ -69,66 +69,70 @@ def get_top_five_transactions(transactions) -> List[Dict[str, Any]]:
 
 
 def get_currency_rates(file_path: str) -> List[Dict[str, Any]]:
-    """Получает курсы валют из файла настроек"""
+    """Получает курсы валют из API ЦБ РФ"""
     with open(file_path, "r", encoding="utf-8") as f:
         settings = json.load(f)
 
     user_currencies = settings["user_currencies"]
-    result = []
+    result = [{"currency": "RUB", "rate": 1.0}]
 
-    for currency in user_currencies:
-        if currency == "RUB":
-            result.append({"currency": currency, "rate": 1.0})
-        else:
-            url = f"https://api.exchangerate-api.com/v4/latest/{currency}"
-            response = requests.get(url)
-            data = response.json()
-            rub_rate = data["rates"]["RUB"]
-            result.append({"currency": currency, "rate": round(rub_rate, 2)})
+    try:
+        # ЦБ РФ отдаёт XML
+        url = "https://www.cbr.ru/scripts/XML_daily.asp"
+        response = requests.get(url, timeout=10)
+        response.encoding = "windows-1251"
+
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(response.text)
+
+        for valute in root.findall("Valute"):
+            char_code = valute.find("CharCode").text
+            if char_code in user_currencies and char_code != "RUB":
+                value = valute.find("Value").text.replace(",", ".")
+                nominal = valute.find("Nominal").text
+                rate = float(value) / int(nominal)
+                result.append({"currency": char_code, "rate": round(rate, 4)})
+
+    except Exception as e:
+        print(f"Ошибка получения курсов: {e}")
+        # fallback
+        for currency in user_currencies:
+            if currency != "RUB" and not any(r["currency"] == currency for r in result):
+                result.append({"currency": currency, "rate": None, "error": str(e)})
 
     return result
 
 
 def get_stock_prices(file_path: str) -> List[Dict[str, Any]]:
-    """
-    Получает текущие цены акций из файла user_settings.json через Alpha Vantage API
-
-    Args:
-        file_path: путь к файлу user_settings.json
-
-    Returns:
-        List[Dict[str, Any]]: список словарей с ценами акций
-    """
+    """Получает текущие цены акций из API Московской биржи"""
     with open(file_path, "r", encoding="utf-8") as file:
         settings = json.load(file)
 
     user_stocks = settings.get("user_stocks", [])
     result = []
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-
     for stock in user_stocks:
         try:
-            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{stock}"
-            response = requests.get(url, headers=headers)
+            # MOEX API
+            url = f"https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQBR/securities/{stock}.json"
+            response = requests.get(url, timeout=10)
 
-            if response.status_code != 200:
-                result.append({"stock": stock, "price": None, "error": f"Ошибка HTTP {response.status_code}"})
-                continue
-
-            data = response.json()
-
-            if data["chart"]["result"] is None:
-                result.append({"stock": stock, "price": None, "error": f"Данные для {stock} не найдены"})
-                continue
-
-            price = data["chart"]["result"][0]["meta"]["regularMarketPrice"]
-
-            result.append({"stock": stock, "price": round(price, 2)})
+            if response.status_code == 200:
+                data = response.json()
+                # цена в marketdata -> data -> первый ряд -> индекс 12 (обычно last)
+                marketdata = data.get("marketdata", {}).get("data", [])
+                if marketdata and len(marketdata[0]) > 12:
+                    price = marketdata[0][12]
+                    if price is not None:
+                        result.append({"stock": stock, "price": round(float(price), 2)})
+                    else:
+                        result.append({"stock": stock, "price": None, "error": "Цена не найдена"})
+                else:
+                    result.append({"stock": stock, "price": None, "error": "Нет данных"})
+            else:
+                result.append({"stock": stock, "price": None, "error": f"HTTP {response.status_code}"})
 
         except Exception as e:
-            result.append({"stock": stock, "price": None, "error": f"Ошибка: {str(e)}"})
+            result.append({"stock": stock, "price": None, "error": str(e)})
 
     return result
