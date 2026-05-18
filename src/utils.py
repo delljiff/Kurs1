@@ -34,18 +34,7 @@ def get_greeting() -> str:
 
 
 def get_card_info(transactions: pd.DataFrame) -> List[Dict[str, Any]]:
-    """
-    Анализирует транзакции по картам
-
-    Args:
-        file_path: путь к Excel файлу
-
-    Returns:
-        List[Dict[str, Any]]: список словарей с ключами:
-            - last_digits: последние 4 цифры карты
-            - total_spent: общая сумма расходов
-            - cashback: сумма кешбэка
-    """
+    """Анализирует транзакции по картам"""
     df = transactions[(transactions["Статус"] == "OK") & (transactions["Сумма операции"] < 0)]
     df = df[df["Номер карты"].notna()]
     df["last_digits"] = df["Номер карты"].str.replace("*", "")

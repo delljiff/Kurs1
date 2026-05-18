@@ -1,7 +1,7 @@
 from typing import Any, Dict
 import pandas as pd
 import logging
-from utils import get_card_info, get_currency_rates, get_greeting, get_stock_prices, get_top_five_transactions
+from src.utils import get_card_info, get_currency_rates, get_greeting, get_stock_prices, get_top_five_transactions
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ def main_page(transactions: pd.DataFrame, date: str) -> Dict[str, Any]:
     """
     logger.info(f"Формирование главной страницы для даты: {date}")
 
-    start_date = f"{date[:8]}01{date[10:]}"
+    start_date = f"01{date[2:]}"
     end_date = date
 
     logger.debug(f"Период фильтрации: с {start_date} по {end_date}")
@@ -25,8 +25,8 @@ def main_page(transactions: pd.DataFrame, date: str) -> Dict[str, Any]:
         "greeting": get_greeting(),
         "cards": get_card_info(filtered_df),
         "top_transactions": get_top_five_transactions(filtered_df),
-        "currency_rates": get_currency_rates("user_settings.json"),
-        "stock_prices": get_stock_prices("user_settings.json"),
+        "currency_rates": get_currency_rates("../user_settings.json"),
+        "stock_prices": get_stock_prices("../user_settings.json"),
     }
 
     logger.info(f"Сформировано {len(data_json)} блоков данных для главной страницы")

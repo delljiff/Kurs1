@@ -49,7 +49,9 @@ def spending_by_category(transactions: pd.DataFrame,
     logger.info(f"Анализ трат по категории: {category}")
 
     df = transactions.copy()
+    print(df)
     df['Дата'] = pd.to_datetime(df['Дата операции'], dayfirst=True, errors='coerce')
+    print(df)
 
     if date is None:
         end_date = datetime.now()
@@ -62,6 +64,7 @@ def spending_by_category(transactions: pd.DataFrame,
     logger.info(f"Период анализа: с {start_date.date()} по {end_date.date()}")
 
     date_filtered = df[(df['Дата'] >= start_date) & (df['Дата'] <= end_date)]
+    print(date_filtered)
 
     result = date_filtered[
         (date_filtered['Категория'] == category) &
