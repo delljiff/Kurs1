@@ -1,23 +1,25 @@
-import pytest
-import pandas as pd
 import json
+from pathlib import Path
+
+import pandas as pd
+import pytest
 
 
 @pytest.fixture
-def sample_transactions():
+def sample_transactions() -> pd.DataFrame:
     """Создает тестовый DataFrame с транзакциями"""
     data = {
         "Дата операции": [
             "31.12.2021 16:44:00",
             "28.12.2021 13:44:39",
-            "15.10.2021 10:30:00",   # ← добавил октябрь
+            "15.10.2021 10:30:00",
             "01.12.2021 09:00:00",
             "30.11.2021 18:00:00",
         ],
         "Дата платежа": [
             "31.12.2021",
             "28.12.2021",
-            "15.10.2021",            # ← добавил
+            "15.10.2021",
             "01.12.2021",
             "30.11.2021",
         ],
@@ -39,12 +41,9 @@ def sample_transactions():
 
 
 @pytest.fixture
-def sample_user_settings(tmp_path):
+def sample_user_settings(tmp_path: Path) -> str:
     """Создает временный файл user_settings.json"""
-    settings = {
-        "user_currencies": ["USD", "EUR", "RUB"],
-        "user_stocks": ["SBER", "GAZP"]
-    }
+    settings = {"user_currencies": ["USD", "EUR", "RUB"], "user_stocks": ["SBER", "GAZP"]}
     file_path = tmp_path / "user_settings.json"
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(settings, f)

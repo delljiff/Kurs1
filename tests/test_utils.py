@@ -37,7 +37,7 @@ class TestGetGreeting:
 class TestGetCardInfo:
     """Тесты для get_card_info"""
 
-    def test_get_card_info_returns_list(self, sample_transactions):
+    def test_get_card_info_returns_list(self, sample_transactions: pd.DataFrame) -> None:
         """Тест: возвращает список"""
         result = get_card_info(sample_transactions)
         assert isinstance(result, list)

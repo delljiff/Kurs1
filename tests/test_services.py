@@ -89,7 +89,7 @@ class TestBestCategoriesOfHighCashback:
         assert len(categories) == 2
         assert values[0] >= values[1]  # проверка сортировки по убыванию
 
-    def test_missing_columns(self):
+    def test_missing_columns(self) -> None:
         """Тест: отсутствуют необходимые колонки"""
         df = pd.DataFrame({"другая_колонка": [1, 2, 3]})
 
