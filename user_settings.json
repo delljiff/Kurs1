@@ -1,0 +1,4 @@
+{
+  "user_currencies": ["USD", "EUR", "CNY", "RUB"],
+  "user_stocks": ["SBER", "GAZP", "ROSN"]
+}
